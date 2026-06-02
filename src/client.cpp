@@ -1,82 +1,31 @@
-#include <cstring>
+#include "../include/Client.hpp"
+#include <chrono>
 #include <iostream>
+#include <thread>
 
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <unistd.h>
+Client::Client(const std::string &serverIp, short port)
+    : connectionHandler(std::make_unique<ConnectionHandler>(serverIp, port)) {}
 
-#include "message.hpp"
-
-const short PORT = 8080;
-const char *SERVER_IP = "127.0.0.1"; // loop-back address
-
-void send_message(int sock, MessageType type, const std::string &payload) {
-  auto buffer = serialize_message(type, payload);
-  send(sock, buffer.data(), buffer.size(), 0);
+void Client::start() {
+  std::cout << "Client starting...\n";
+  connectionHandler->connect();
+  // In a real application, UI would be initialized here
 }
 
-int main() {
+void Client::stop() {
+  std::cout << "Client stopping...\n";
+  connectionHandler->disconnect();
+}
 
-  int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-  if (clientSocket < 0) {
-    perror("socket failed");
-    return -1;
-  }
+void Client::login(const std::string &user) {
+  username = user;
+  connectionHandler->send(MessageType::LOGIN, username);
+  auto [type, payload] = connectionHandler->receive();
+  std::cout << "Server: " << payload << "\n";
+}
 
-  sockaddr_in serverAddress{};
-  serverAddress.sin_family = AF_INET;
-  serverAddress.sin_port = htons(PORT);
-
-  if (inet_pton(AF_INET, SERVER_IP, &serverAddress.sin_addr) <= 0) {
-    perror("Invalid address / Address not supported");
-    close(clientSocket);
-    return -1;
-  }
-
-  std::cout << "Connecting to server at " << SERVER_IP << ":" << PORT << "..."
-            << '\n';
-
-  sleep(1);
-
-  if (connect(clientSocket, (struct sockaddr *)&serverAddress,
-              sizeof(serverAddress)) < 0) {
-    perror("connection failed");
-    close(clientSocket);
-    return -1;
-  }
-
-  std::cout << "Connected to server!" << '\n';
-
-  // Login
-  std::string username;
-  std::cout << "Enter username: ";
-  std::getline(std::cin, username);
-  send_message(clientSocket, LOGIN, username);
-
-  try {
-    auto [type, payload] = receive_message(clientSocket);
-    std::cout << "Server: " << payload << '\n';
-  } catch (const std::exception &e) {
-    std::cerr << "Error: " << e.what() << '\n';
-    close(clientSocket);
-    return -1;
-  }
-
-  std::string message;
-  std::cout << "Enter message: ";
-  std::getline(std::cin, message);
-  send_message(clientSocket, MESSAGE, message);
-
-  try {
-    auto [type, payload] = receive_message(clientSocket);
-    std::cout << "Server: " << payload << '\n';
-  } catch (const std::exception &e) {
-    std::cerr << "Error: " << e.what() << '\n';
-    close(clientSocket);
-    return -1;
-  }
-
-  send_message(clientSocket, LOGOUT, username);
-  close(clientSocket);
-  return 0;
+void Client::sendMessage(const std::string &message) {
+  connectionHandler->send(MessageType::MESSAGE, message);
+  auto [type, payload] = connectionHandler->receive();
+  std::cout << "Server: " << payload << "\n";
 }

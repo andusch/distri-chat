@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <stdexcept>
 #include <string>
+#include <sys/socket.h>
 #include <vector>
 
 enum MessageType : uint8_t { LOGIN = 0x01, MESSAGE = 0x02, LOGOUT = 0x03 };

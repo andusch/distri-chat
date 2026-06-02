@@ -4,11 +4,10 @@ project(DistriChat LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(server src/server.cpp)
-add_executable(client src/client.cpp)
+include_directories(include)
 
-target_include_directories(server PRIVATE include)
-target_include_directories(client PRIVATE include)
+add_executable(client client.cpp src/ConnectionHandler.cpp src/Client.cpp)
+add_executable(server server.cpp src/ClientConnection.cpp src/Server.cpp)
 
-target_link_libraries(server PRIVATE pthread)
-target_link_libraries(client PRIVATE pthread)
+target_link_libraries(client pthread)
+target_link_libraries(server pthread)
