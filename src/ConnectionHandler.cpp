@@ -30,7 +30,8 @@ void ConnectionHandler::connect() {
     throw std::runtime_error("Invalid server IP address");
   }
 
-  std::cout << "Connecting to server at " << serverIp << ":" << port << "...\n";
+  std::cout << "\033[34mConnecting to server at " << serverIp << ":" << port
+            << "...\033[0m" << '\n';
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   if (::connect(clientSocket, (struct sockaddr *)&serverAddress,
@@ -41,14 +42,14 @@ void ConnectionHandler::connect() {
     throw std::runtime_error("Failed to connect to server");
   }
 
-  std::cout << "Connected to server!\n";
+  std::cout << "\033[34mConnected to server!\033[0m" << '\n';
 }
 
 void ConnectionHandler::disconnect() {
   if (clientSocket != -1) {
     close(clientSocket);
     clientSocket = -1;
-    std::cout << "Disconnected from server.\n";
+    std::cout << "\033[34mDisconnected from server.\033[0m" << '\n';
   }
 }
 

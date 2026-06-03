@@ -7,13 +7,14 @@ Client::Client(const std::string &serverIp, short port)
     : connectionHandler(std::make_unique<ConnectionHandler>(serverIp, port)) {}
 
 void Client::start() {
-  std::cout << "Client starting...\n";
+  std::cout << "\033[34mClient starting...\033[0m" << '\n';
   connectionHandler->connect();
   // In a real application, UI would be initialized here
 }
 
 void Client::stop() {
-  std::cout << "Client stopping...\n";
+  std::cout << "\033[34mClient stopping...\033[0m" << '\n';
+  connectionHandler->send(MessageType::LOGOUT, username);
   connectionHandler->disconnect();
 }
 

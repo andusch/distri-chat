@@ -40,7 +40,8 @@ void Server::start() {
     throw std::runtime_error("Failed to listen on server socket");
   }
 
-  std::cout << "Chat server listening on port: " << port << "\n";
+  std::cout << "\033[34mChat server listening on port: " << port << "\033[0m"
+            << '\n';
   running = true;
   acceptConnections();
 }
@@ -56,7 +57,7 @@ void Server::stop() {
       t.join();
     }
   }
-  std::cout << "Server stopped.\n";
+  std::cout << "\033[34mServer stopped.\033[0m" << '\n';
 }
 
 void Server::acceptConnections() {

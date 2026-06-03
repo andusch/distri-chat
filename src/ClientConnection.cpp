@@ -8,7 +8,8 @@ ClientConnection::ClientConnection(int sock) : clientSocket(sock) {}
 ClientConnection::~ClientConnection() {
   if (clientSocket != -1) {
     close(clientSocket);
-    std::cout << "Client socket closed for user: " << connectedUsername << '\n';
+    std::cout << "\033[34mClient socket closed for user: \033[32m"
+              << connectedUsername << "\033[0m" << '\n';
   }
 }
 
@@ -23,7 +24,7 @@ void ClientConnection::handleClient() {
       }
     }
   } catch (const std::exception &e) {
-    std::cerr << "Error: " << e.what() << '\n';
+    std::cerr << "\033[31mError: " << e.what() << "\033[0m" << '\n';
   }
 }
 
@@ -41,20 +42,21 @@ void ClientConnection::processMessage(MessageType type,
   switch (type) {
   case MessageType::LOGIN:
     connectedUsername = payload;
-    std::cout << "User logged in: " << connectedUsername << "\n";
+    std::cout << "User logged in: \033[32m" << connectedUsername << "\033[0m"
+              << '\n';
     send(MessageType::MESSAGE, "Welcome, " + connectedUsername + "!");
     break;
   case MessageType::MESSAGE:
-    std::cout << "Message from " << connectedUsername << ": " << payload
-              << "\n";
+    std::cout << "Message from \033[32m" << connectedUsername
+              << "\033[0m: " << payload << "\033[0m" << '\n';
     send(MessageType::MESSAGE, payload); // Echo back for now
     break;
   case MessageType::LOGOUT:
-    std::cout << "User logged out: " << payload << "\n";
+    std::cout << "User logged out: \033[32m" << payload << "\033[0m" << '\n';
     // Perform cleanup if necessary
     break;
   default:
-    std::cerr << "Unknown message type received.\n";
+    std::cerr << "\033[31mUnknown message type received.\033[0m" << '\n';
     break;
   }
 }
