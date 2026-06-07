@@ -1,8 +1,10 @@
 #pragma once
 
 #include "ConnectionHandler.hpp"
+#include <atomic>
 #include <memory>
 #include <string>
+#include <thread>
 
 class Client {
 
@@ -16,4 +18,7 @@ public:
 private:
   std::unique_ptr<ConnectionHandler> connectionHandler;
   std::string username;
+  std::thread receiveThread;
+  std::atomic<bool> receiving;
+  void receiveLoop();
 };

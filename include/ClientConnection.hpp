@@ -3,10 +3,12 @@
 #include "message.hpp"
 #include <string>
 
+class Server;
+
 class ClientConnection {
 
 public:
-  ClientConnection(int clientSocket);
+  ClientConnection(int clientSocket, Server &server);
   ~ClientConnection();
 
   void handleClient();
@@ -14,6 +16,7 @@ public:
 private:
   int clientSocket;
   std::string connectedUsername;
+  Server &server;
 
   void send(MessageType type, const std::string &payload);
   std::pair<MessageType, std::string> receive();

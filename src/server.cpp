@@ -73,9 +73,19 @@ void Server::acceptConnections() {
       continue;
     }
     std::cout << "Client connected!\n";
-    clientThreads.emplace_back([clientSock]() {
-      ClientConnection clientConn(clientSock);
+    clientThreads.emplace_back([this, clientSock]() {
+      ClientConnection clientConn(clientSock, *this);
       clientConn.handleClient();
     });
+  }
+}
+
+void Server::broadcastMessage(const std::string &senderUsername,
+                              const std::string &message) {
+  std::lock_guard<std::mutex> lock(clientsMutex);
+  std::string fullMessage = senderUsername + ": " + message;
+  for (const auto &pair : activeClients) {
+    auto buffer = serialize_message(MessageType::MESSAGE, fullMessage);
+    ::send(pair.second, buffer.data(), buffer.size(), 0);
   }
 }

@@ -1,4 +1,5 @@
 #include "./include/Client.hpp"
+#include <algorithm>
 #include <cstring>
 #include <iostream>
 
@@ -16,10 +17,22 @@ int main() {
     std::getline(std::cin, username);
     chatClient.login(username);
 
-    std::string message;
-    std::cout << "Enter message: ";
-    std::getline(std::cin, message);
-    chatClient.sendMessage(message);
+    while (true) {
+
+      std::string message;
+      std::cout << "Enter message: " << std::flush;
+      std::getline(std::cin, message);
+
+      std::string aux = message;
+      std::transform(aux.begin(), aux.end(), aux.begin(), ::tolower);
+      // std::cout << "Lowercase message is: " << aux << '\n';
+      if ((aux.compare(std::string("exit")) == 0) ||
+          (aux.compare(std::string("stop")) == 0) ||
+          (aux.compare(std::string("disconnect")) == 0)) {
+        break;
+      }
+      chatClient.sendMessage(message);
+    }
 
     chatClient.stop();
 

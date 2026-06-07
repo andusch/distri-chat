@@ -1,15 +1,20 @@
 #include "../include/ClientConnection.hpp"
+#include "../include/Server.hpp"
 #include <cstring>
 #include <iostream>
+#include <mutex>
 #include <unistd.h>
 
-ClientConnection::ClientConnection(int sock) : clientSocket(sock) {}
+ClientConnection::ClientConnection(int sock, Server &s)
+    : clientSocket(sock), server(s) {}
 
 ClientConnection::~ClientConnection() {
   if (clientSocket != -1) {
     close(clientSocket);
     std::cout << "\033[34mClient socket closed for user: \033[32m"
               << connectedUsername << "\033[0m" << '\n';
+    std::lock_guard<std::mutex> lock(server.clientsMutex);
+    server.activeClients.erase(connectedUsername);
   }
 }
 
@@ -44,16 +49,19 @@ void ClientConnection::processMessage(MessageType type,
     connectedUsername = payload;
     std::cout << "User logged in: \033[32m" << connectedUsername << "\033[0m"
               << '\n';
-    send(MessageType::MESSAGE, "Welcome, " + connectedUsername + "!");
+    {
+      std::lock_guard<std::mutex> lock(server.clientsMutex);
+      server.activeClients[connectedUsername] = clientSocket;
+    }
+    server.broadcastMessage(connectedUsername, "joined the chat");
     break;
   case MessageType::MESSAGE:
     std::cout << "Message from \033[32m" << connectedUsername
-              << "\033[0m: " << payload << "\033[0m" << '\n';
-    send(MessageType::MESSAGE, payload); // Echo back for now
+              << "\033[0m: " << payload << '\n';
+    server.broadcastMessage(connectedUsername, payload);
     break;
   case MessageType::LOGOUT:
     std::cout << "User logged out: \033[32m" << payload << "\033[0m" << '\n';
-    // Perform cleanup if necessary
     break;
   default:
     std::cerr << "\033[31mUnknown message type received.\033[0m" << '\n';
