@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <ctime>
 #include <stdexcept>
 #include <string>
 #include <sys/socket.h>
@@ -12,6 +13,29 @@ struct MessageHeader {
   uint8_t type;
   uint32_t length; // network byte order
 };
+
+struct ChatMessage {
+
+  std::string username;
+  std::string content;
+  std::string timestamp;
+
+  ChatMessage(const std::string &user, const std::string &msg,
+              const std::string &time)
+      : username(user), content(msg), timestamp(time) {};
+
+  std::string toString() const {
+    return "[" + timestamp + "] " + username + ": " + content;
+  }
+};
+
+inline std::string getCurrentTimestamp() {
+  std::time_t now = std::time(nullptr);
+  std::tm *local_time = std::localtime(&now);
+  char buffer[80];
+  std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", local_time);
+  return std::string(buffer);
+}
 
 inline std::vector<uint8_t> serialize_message(MessageType type,
                                               const std::string &payload) {

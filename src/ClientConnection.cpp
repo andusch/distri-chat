@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 ClientConnection::ClientConnection(int sock, Server &s)
-    : clientSocket(sock), server(s) {}
+    : clientSocket(sock), server(s), connected(true) {}
 
 ClientConnection::~ClientConnection() {
   if (clientSocket != -1) {
@@ -15,6 +15,23 @@ ClientConnection::~ClientConnection() {
               << connectedUsername << "\033[0m" << '\n';
     std::lock_guard<std::mutex> lock(server.clientsMutex);
     server.activeClients.erase(connectedUsername);
+  }
+}
+
+void ClientConnection::disconnect() {
+  if (clientSocket != -1 && connected) {
+    close(clientSocket);
+    clientSocket = -1;
+    connected = false;
+
+    if (!connectedUsername.empty()) {
+      std::lock_guard<std::mutex> lock(server.clientsMutex);
+      server.activeClients.erase(connectedUsername);
+
+      std::cout << "Client socket closed for user: " << connectedUsername
+                << '\n';
+      server.broadcastMessage(connectedUsername, " has left the chat");
+    }
   }
 }
 
@@ -39,6 +56,9 @@ void ClientConnection::send(MessageType type, const std::string &payload) {
 }
 
 std::pair<MessageType, std::string> ClientConnection::receive() {
+  if (clientSocket == -1) {
+    throw std::runtime_error("Client socket is closed.");
+  }
   return receive_message(clientSocket);
 }
 

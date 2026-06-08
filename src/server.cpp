@@ -1,4 +1,5 @@
 #include "../include/Server.hpp"
+#include "../include/message.hpp"
 #include <arpa/inet.h>
 #include <cstring>
 #include <iostream>
@@ -6,7 +7,12 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-Server::Server(short p) : port(p), serverSocket(-1), running(false) {}
+Server::Server(short p)
+    : port(p), serverSocket(-1), running(false),
+      dbHandler(std::make_unique<DatabaseHandler>("chat_history.db")) {
+  dbHandler->initialize();
+  messageHistory = dbHandler->loadMessageHistory(100);
+}
 Server::~Server() { stop(); }
 
 void Server::start() {
@@ -76,16 +82,58 @@ void Server::acceptConnections() {
     clientThreads.emplace_back([this, clientSock]() {
       ClientConnection clientConn(clientSock, *this);
       clientConn.handleClient();
+
+      {
+        std::lock_guard<std::mutex> lock(clientsMutex);
+        for (auto it = activeClients.begin(); it != activeClients.end();) {
+          if (it->second == clientSock) {
+            std::cout << "Client disconnected: " << it->first << '\n';
+            it = activeClients.erase(it);
+            break;
+          } else {
+            ++it;
+          }
+        }
+      }
     });
   }
 }
 
 void Server::broadcastMessage(const std::string &senderUsername,
                               const std::string &message) {
+  std::string timestamp = getCurrentTimestamp();
+  std::string fullMessage =
+      "[" + timestamp + "] " + senderUsername + ": " + message;
+
   std::lock_guard<std::mutex> lock(clientsMutex);
-  std::string fullMessage = senderUsername + ": " + message;
-  for (const auto &pair : activeClients) {
-    auto buffer = serialize_message(MessageType::MESSAGE, fullMessage);
-    ::send(pair.second, buffer.data(), buffer.size(), 0);
+  for (const auto &it : activeClients) {
+    try {
+      auto buffer = serialize_message(MessageType::MESSAGE, fullMessage);
+      ::send(it.second, buffer.data(), buffer.size(), 0);
+    } catch (const std::exception &e) {
+      std::cerr << "Error sending to " << it.first << ": " << e.what() << '\n';
+    }
   }
+
+  addMessageToHistory(senderUsername, message);
+}
+
+void Server::addMessageToHistory(const std::string &username,
+                                 const std::string &message) {
+  std::lock_guard<std::mutex> lock(historyMutex);
+  std::string time = getCurrentTimestamp();
+  ChatMessage msg(username, message, time);
+  messageHistory.push_back(msg);
+
+  if (dbHandler) {
+    dbHandler->saveMessage(username, message);
+  }
+
+  if (messageHistory.size() > 100)
+    messageHistory.erase(messageHistory.begin());
+}
+
+std::vector<ChatMessage> Server::getMessageHistory() const {
+  std::lock_guard<std::mutex> lock(historyMutex);
+  return messageHistory;
 }

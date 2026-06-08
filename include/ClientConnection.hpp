@@ -12,9 +12,11 @@ public:
   ~ClientConnection();
 
   void handleClient();
+  void disconnect();
 
 private:
   int clientSocket;
+  bool connected;
   std::string connectedUsername;
   Server &server;
 
