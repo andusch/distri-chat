@@ -1,6 +1,6 @@
 #pragma once
 
-#include "message.hpp"
+#include "Common/message.hpp"
 #include <sqlite3.h>
 #include <string>
 #include <vector>

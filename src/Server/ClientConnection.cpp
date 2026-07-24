@@ -1,5 +1,5 @@
-#include "../include/ClientConnection.hpp"
-#include "../include/Server.hpp"
+#include "Server/ClientConnection.hpp"
+#include "Server/Server.hpp"
 #include <cstring>
 #include <iostream>
 #include <mutex>

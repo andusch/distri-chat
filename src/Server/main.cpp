@@ -1,4 +1,4 @@
-#include "./include/Server.hpp"
+#include "Server/Server.hpp"
 #include <iostream>
 
 const short PORT = 8080;

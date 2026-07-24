@@ -2,7 +2,7 @@
 
 #include "ClientConnection.hpp"
 #include "DatabaseHandler.hpp"
-#include "message.hpp"
+#include "Common/message.hpp"
 #include <map>
 #include <memory>
 #include <mutex>

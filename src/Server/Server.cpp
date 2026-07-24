@@ -1,5 +1,5 @@
-#include "../include/Server.hpp"
-#include "../include/message.hpp"
+#include "../include/Server/Server.hpp"
+#include "../include/Common/message.hpp"
 #include <arpa/inet.h>
 #include <cstring>
 #include <iostream>
